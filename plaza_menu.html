@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PLAZA — меню</title>
+<style>
+:root{
+  --bg:#0b0c0d; --card:#17191b; --card2:#1c1e20; --text:#f5f2ed;
+  --muted:#aaa7a2; --gold:#e7c27d; --line:#36383a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#050606;color:var(--text);font-family:Georgia,"Times New Roman",serif}
+button{font:inherit}
+.app{max-width:560px;margin:auto;min-height:100vh;background:
+ radial-gradient(circle at 20% 0%,#222 0,#0b0c0d 34%,#070808 100%);
+ padding:18px 14px 34px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:5px 4px 17px}
+.back,.search{width:40px;height:40px;border:0;background:transparent;color:#eee;font-size:28px}
+.brand{text-align:center;letter-spacing:.24em;font-size:31px;color:var(--gold);margin-left:.24em}
+.subtitle{font:10px Arial,sans-serif;letter-spacing:.48em;color:#85827d;text-align:center;margin-top:2px}
+.search{font-size:25px}
+.tabs{display:flex;gap:26px;overflow:auto;scrollbar-width:none;padding:7px 4px 13px;border-bottom:1px solid #242628}
+.tabs::-webkit-scrollbar{display:none}
+.tab{white-space:nowrap;color:#8e8b87;font:16px Arial,sans-serif;background:none;border:0;padding:8px 0}
+.tab.active{color:#fff;position:relative}
+.tab.active:after{content:"";position:absolute;height:2px;background:var(--gold);left:0;right:0;bottom:0}
+.list{padding-top:16px;display:grid;gap:14px}
+.card{display:grid;grid-template-columns:145px 1fr;gap:15px;min-height:166px;padding:10px;border:1px solid #3a3b3d;border-radius:18px;background:linear-gradient(145deg,#202224,#141617);box-shadow:0 9px 28px #0007}
+.photo{border-radius:13px;min-height:145px;border:1px solid #555;background:
+ radial-gradient(circle at 50% 35%,#343638,#1a1b1c 58%,#101112);
+ display:flex;align-items:center;justify-content:center;color:#777;font:12px Arial,sans-serif;text-align:center}
+.info{padding:8px 4px 4px;display:flex;flex-direction:column}
+h2{font-size:23px;margin:0 0 8px}
+.desc{font:16px/1.35 Arial,sans-serif;color:#aaa;margin:0 0 11px}
+.price{margin-top:auto;color:var(--gold);font-size:23px}
+.add{width:42px;height:42px;border-radius:50%;border:0;background:var(--gold);color:#151515;font-size:29px;line-height:1;align-self:flex-end;cursor:pointer}
+.detail{position:fixed;inset:0;background:#090a0b;z-index:5;overflow:auto;display:none}
+.detail.open{display:block}
+.detail-inner{max-width:560px;margin:auto;min-height:100vh}
+.hero{height:44vh;min-height:300px;display:flex;align-items:center;justify-content:center;background:
+ radial-gradient(ellipse at center,#3a3b3c 0,#1b1c1d 46%,#090a0b 78%)}
+.hero .photo{width:84%;height:80%;max-height:390px;font-size:14px}
+.detail-content{padding:4px 22px 30px}
+.close{position:fixed;right:18px;top:18px;width:42px;height:42px;border:0;border-radius:50%;background:#111b;color:#fff;font-size:30px;z-index:6}
+.title-row{display:flex;justify-content:space-between;gap:16px;align-items:flex-end}
+.title-row h1{font-size:35px;margin:0 0 12px}
+.detail-price{font-size:25px;color:var(--gold);white-space:nowrap}
+.detail-desc{font:17px/1.5 Arial,sans-serif;color:#aaa;border-bottom:1px solid var(--line);padding-bottom:22px}
+.section{font-size:21px;margin:22px 0 9px}
+.ingredients{font:16px/1.45 Arial,sans-serif;color:#aaa}
+.nutrition{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:15px 0}
+.nutrition div{font:13px Arial,sans-serif;color:#8d8b87;padding:0 8px;border-right:1px solid #333}
+.nutrition div:last-child{border:0}.nutrition b{display:block;color:#ddd;font-size:16px;margin-top:5px}
+.order{margin-top:22px;width:100%;height:58px;border:0;border-radius:16px;background:var(--gold);font:bold 18px Arial,sans-serif;color:#171717}
+@media(max-width:430px){.card{grid-template-columns:125px 1fr}.photo{min-height:125px}h2{font-size:20px}.desc{font-size:14px}.brand{font-size:27px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="header">
+<button class="back" aria-label="Назад">‹</button>
+<div><div class="brand">PLAZA</div><div class="subtitle">Р Е С Т О Р А Н</div></div>
+<button class="search" aria-label="Поиск">⌕</button>
+</header>
+
+<nav class="tabs">
+<button class="tab">Популярное</button>
+<button class="tab active">Салаты</button>
+<button class="tab">Горячие блюда</button>
+<button class="tab">Закуски</button>
+</nav>
+
+<section class="list" id="list"></section>
+</main>
+
+<section class="detail" id="detail">
+<button class="close" onclick="closeDetail()">×</button>
+<div class="detail-inner">
+  <div class="hero"><div class="photo">ФОТО<br>БЛЮДА</div></div>
+  <div class="detail-content">
+    <div class="title-row"><h1 id="dTitle"></h1><div class="detail-price" id="dPrice"></div></div>
+    <p class="detail-desc" id="dDesc"></p>
+    <div class="section">Состав</div>
+    <div class="ingredients" id="dIngredients"></div>
+    <div class="section">Пищевая ценность (на 100 г)</div>
+    <div class="nutrition">
+      <div>Калории<b>— ккал</b></div><div>Белки<b>— г</b></div>
+      <div>Жиры<b>— г</b></div><div>Углеводы<b>— г</b></div>
+    </div>
+    <button class="order" id="orderBtn">Добавить в заказ</button>
+  </div>
+</div>
+</section>
+
+<script>
+const dishes=[
+ {name:"Цезарь",desc:"Айсберг, куриное филе, пармезан, гренки, соус Цезарь",price:"580 ₽"},
+ {name:"Салат с бурратой",desc:"Свежие томаты, буррата, руккола, соус песто",price:"690 ₽"},
+ {name:"Греческий салат",desc:"Свежие овощи, фета, маслины, оливковое масло",price:"520 ₽"},
+ {name:"Салат с лососем",desc:"Лосось, авокадо, микс салата, цитрусовый соус",price:"750 ₽"}
+];
+const list=document.getElementById("list");
+dishes.forEach((d,i)=>{
+ const el=document.createElement("article"); el.className="card";
+ el.innerHTML=`<div class="photo">ФОТО<br>БЛЮДА</div>
+ <div class="info"><h2>${d.name}</h2><p class="desc">${d.desc}</p>
+ <div class="price">${d.price}</div></div>`;
+ el.onclick=()=>openDetail(i); list.appendChild(el);
+});
+function openDetail(i){
+ const d=dishes[i];
+ dTitle.textContent=d.name; dPrice.textContent=d.price; dDesc.textContent=d.desc;
+ dIngredients.textContent=d.desc;
+ detail.classList.add("open"); document.body.style.overflow="hidden";
+}
+function closeDetail(){detail.classList.remove("open");document.body.style.overflow=""}
+</script>
+</body>
+</html>
