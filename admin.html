@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PLAZA — Личный кабинет</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#090a0b;
+  color:#eee;
+  font-family:Arial,sans-serif;
+}
+.wrap{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+h1{margin:0 0 6px;color:#e7c27d}
+h2{margin-top:30px}
+.muted{color:#999}
+.card{
+  background:#17191b;
+  border:1px solid #303235;
+  border-radius:14px;
+  padding:18px;
+  margin:14px 0;
+}
+input,textarea,select{
+  width:100%;
+  background:#0e1011;
+  color:#fff;
+  border:1px solid #383a3d;
+  border-radius:9px;
+  padding:12px;
+  margin:6px 0 12px;
+  font-size:15px;
+}
+textarea{min-height:90px;resize:vertical}
+button{
+  border:0;
+  border-radius:9px;
+  padding:11px 16px;
+  background:#e7c27d;
+  color:#111;
+  font-weight:bold;
+  cursor:pointer;
+  margin:4px;
+}
+button.dark{
+  background:#292b2e;
+  color:#eee;
+}
+button.red{
+  background:#7b3030;
+  color:#fff;
+}
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+@media(max-width:650px){
+  .row{grid-template-columns:1fr}
+}
+.hidden{display:none!important}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:20px;
+}
+.item{
+  display:grid;
+  grid-template-columns:90px 1fr;
+  gap:14px;
+  align-items:center;
+}
+.item img{
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:10px;
+  background:#222;
+}
+.actions{
+  display:flex;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.status{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:20px;
+  font-size:12px;
+  background:#315d3a;
+}
+.off{
+  background:#633535;
+}
+#message{
+  position:fixed;
+  left:50%;
+  bottom:20px;
+  transform:translateX(-50%);
+  background:#222;
+  border:1px solid #444;
+  padding:12px 18px;
+  border-radius:10px;
+  display:none;
+  z-index:20;
+}
+</style>
+</head>
+
+<body>
+
+<div id="message"></div>
+
+<!-- LOGIN -->
+<div id="login" class="wrap">
+  <div class="card" style="max-width:430px;margin:70px auto">
+    <h1>PLAZA</h1>
+    <p class="muted">Личный кабинет</p>
+
+    <label>Email</label>
+    <input id="email" type="email" placeholder="Email">
+
+    <label>Пароль</label>
+    <input id="password" type="password" placeholder="Пароль">
+
+    <button id="loginBtn">Войти</button>
+
+    <p id="loginError" class="muted"></p>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="wrap hidden">
+
+  <div class="top">
+    <div>
+      <h1>PLAZA</h1>
+      <div class="muted">Личный кабинет</div>
+    </div>
+    <button id="logoutBtn" class="dark">Выйти</button>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="card">
+    <h2>Категории</h2>
+
+    <div class="row">
+      <div>
+        <label>Новая категория</label>
+        <input id="categoryName" placeholder="Например: Салаты">
+      </div>
+      <div style="display:flex;align-items:end">
+        <button id="addCategoryBtn">Добавить категорию</button>
+      </div>
+    </div>
+
+    <div id="categories"></div>
+  </div>
+
+  <!-- DISH -->
+  <div class="card">
+    <h2 id="dishTitle">Добавить блюдо</h2>
+
+    <input id="dishId" type="hidden">
+
+    <label>Название</label>
+    <input id="dishName" placeholder="Название блюда">
+
+    <div class="row">
+      <div>
+        <label>Категория</label>
+        <select id="dishCategory"></select>
+      </div>
+
+      <div>
+        <label>Цена, ₽</label>
+        <input id="dishPrice" type="number" min="0" step="1" placeholder="580">
+      </div>
+    </div>
+
+    <label>Описание</label>
+    <textarea id="dishDescription" placeholder="Краткое описание блюда"></textarea>
+
+    <label>Состав</label>
+    <textarea id="dishIngredients" placeholder="Ингредиенты"></textarea>
+
+    <label>Фотография</label>
+    <input id="dishImage" type="file" accept="image/*">
+
+    <div>
+      <button id="saveDishBtn">Сохранить блюдо</button>
+      <button id="cancelEditBtn" class="dark">Очистить</button>
+    </div>
+  </div>
+
+  <!-- DISHES -->
+  <div class="card">
+    <h2>Блюда</h2>
+    <div id="dishes"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL =
+  "https://scqtvunhdahbzgjmqsfi.supabase.co";
+
+/*
+  ВСТАВЬ СЮДА СКОПИРОВАННЫЙ PUBLISHABLE KEY.
+
+  Пример:
+  const SUPABASE_KEY = "sb_publishable_.....";
+*/
+const SUPABASE_KEY = "sb_publishable_uSU3TMfp2mT8iO4tJ3et0Q_3jUGbip9";
+
+const supabaseClient =
+  window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const loginBox = document.getElementById("login");
+const adminBox = document.getElementById("admin");
+
+let categoriesData = [];
+let dishesData = [];
+
+function message(text){
+  const el=document.getElementById("message");
+  el.textContent=text;
+  el.style.display="block";
+  setTimeout(()=>el.style.display="none",3000);
+}
+
+function showAdmin(){
+  loginBox.classList.add("hidden");
+  adminBox.classList.remove("hidden");
+}
+
+function showLogin(){
+  adminBox.classList.add("hidden");
+  loginBox.classList.remove("hidden");
+}
+
+async function checkSession(){
+  const {data}=await supabaseClient.auth.getSession();
+
+  if(data.session){
+    showAdmin();
+    await loadAll();
+  }else{
+    showLogin();
+  }
+}
+
+supabaseClient.auth.onAuthStateChange((event)=>{
+  if(event==="SIGNED_OUT"){
+    showLogin();
+  }
+});
+
+document.getElementById("loginBtn").onclick=async()=>{
+  const email=document.getElementById("email").value.trim();
+  const password=document.getElementById("password").value;
+
+  const {error}=await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    document.getElementById("loginError").textContent=error.message;
+    return;
+  }
+
+  document.getElementById("loginError").textContent="";
+  showAdmin();
+  await loadAll();
+};
+
+document.getElementById("logoutBtn").onclick=async()=>{
+  await supabaseClient.auth.signOut();
+};
+
+async function loadAll(){
+  await loadCategories();
+  await loadDishes();
+}
+
+async function loadCategories(){
+
+  const {data,error}=await supabaseClient
+    .from("categories")
+    .select("*")
+    .order("sort_order",{ascending:true});
+
+  if(error){
+    message("Ошибка категорий: "+error.message);
+    return;
+  }
+
+  categoriesData=data||[];
+  renderCategories();
+  renderCategorySelect();
+}
+
+function renderCategories(){
+
+  const box=document.getElementById("categories");
+  box.innerHTML="";
+
+  if(!categoriesData.length){
+    box.innerHTML='<p class="muted">Категорий пока нет.</p>';
+    return;
+  }
+
+  categoriesData.forEach(cat=>{
+
+    const div=document.createElement("div");
+    div.className="item card";
+
+    div.innerHTML=`
+      <div>
+        <strong>${escapeHtml(cat.name)}</strong>
+      </div>
+      <div>
+        <span class="status ${cat.is_active?'':'off'}">
+          ${cat.is_active?'Включена':'Выключена'}
+        </span>
+
+        <div class="actions">
+          <button class="dark" onclick="toggleCategory('${cat.id}',${!cat.is_active})">
+            ${cat.is_active?'Выключить':'Включить'}
+          </button>
+
+          <button class="red" onclick="deleteCategory('${cat.id}')">
+            Удалить
+          </button>
+        </div>
+      </div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+function renderCategorySelect(){
+
+  const select=document.getElementById("dishCategory");
+
+  select.innerHTML="";
+
+  categoriesData
+    .filter(c=>c.is_active)
+    .forEach(cat=>{
+      const option=document.createElement("option");
+      option.value=cat.id;
+      option.textContent=cat.name;
+      select.appendChild(option);
+    });
+}
+
+document.getElementById("addCategoryBtn").onclick=async()=>{
+
+  const input=document.getElementById("categoryName");
+  const name=input.value.trim();
+
+  if(!name){
+    message("Введите название категории");
+    return;
+  }
+
+  const maxOrder=categoriesData.length
+    ? Math.max(...categoriesData.map(c=>c.sort_order||0))+1
+    : 0;
+
+  const {error}=await supabaseClient
+    .from("categories")
+    .insert({
+      name,
+      sort_order:maxOrder,
+      is_active:true
+    });
+
+  if(error){
+    message(error.message);
+    return;
+  }
+
+  input.value="";
+  message("Категория добавлена");
+  await loadCategories();
+};
+
+window.toggleCategory=async(id,value)=>{
+
+  const {error}=await supabaseClient
+    .from("categories")
+    .update({is_active:value})
+    .eq("id",id);
+
+  if(error){
+    message(error.message);
+    return;
+  }
+
+  await loadCategories();
+};
+
+window.deleteCategory=async(id)=>{
+
+  if(!confirm("Удалить категорию?")) return;
+
+  const {error}=await supabaseClient
+    .from("categories")
+    .delete()
+    .eq("id",id);
+
+  if(error){
+    message(error.message);
+    return;
+  }
+
+  await loadAll();
+};
+
+async function loadDishes(){
+
+  const {data,error}=await supabaseClient
+    .from("dishes")
+    .select("*, categories(name)")
+    .order("sort_order",{ascending:true});
+
+  if(error){
+    message("Ошибка блюд: "+error.message);
+    return;
+  }
+
+  dishesData=data||[];
+  renderDishes();
+}
+
+function renderDishes(){
+
+  const box=document.getElementById("dishes");
+  box.innerHTML="";
+
+  if(!dishesData.length){
+    box.innerHTML='<p class="muted">Блюд пока нет.</p>';
+    return;
+  }
+
+  dishesData.forEach((dish,index)=>{
+
+    const div=document.createElement("div");
+    div.className="item card";
+
+    const image=dish.image_url
+      ? dish.image_url
+      : "";
+
+    div.innerHTML=`
+      <div>
+        ${
+          image
+          ? `<img src="${image}" alt="">`
+          : `<div style="width:90px;height:90px;border-radius:10px;background:#25272a;display:flex;align-items:center;justify-content:center;font-size:11px;color:#888;text-align:center">ФОТО</div>`
+        }
+      </div>
+
+      <div>
+        <strong>${escapeHtml(dish.name)}</strong>
+
+        <div class="muted">
+          ${escapeHtml(dish.categories?.name || "Без категории")}
+        </div>
+
+        <div style="margin-top:4px">
+          ${Number(dish.price).toLocaleString("ru-RU")} ₽
+        </div>
+
+        <div style="margin-top:7px">
+          <span class="status ${dish.is_active?'':'off'}">
+            ${dish.is_active?'Опубликовано':'Скрыто'}
+          </span>
+        </div>
+
+        <div class="actions">
+
+          <button onclick="editDish('${dish.id}')">
+            Редактировать
+          </button>
+
+          <button class="dark"
+            onclick="toggleDish('${dish.id}',${!dish.is_active})">
+            ${dish.is_active?'Скрыть':'Опубликовать'}
+          </button>
+
+          <button class="dark"
+            onclick="moveDish('${dish.id}',-1)">
+            ↑
+          </button>
+
+          <button class="dark"
+            onclick="moveDish('${dish.id}',1)">
+            ↓
+          </button>
+
+          <button class="red"
+            onclick="deleteDish('${dish.id}')">
+            Удалить
+          </button>
+
+        </div>
+      </div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+document.getElementById("saveDishBtn").onclick=async()=>{
+
+  const id=document.getElementById("dishId").value;
+  const name=document.getElementById("dishName").value.trim();
+  const category_id=document.getElementById("dishCategory").value;
+  const price=Number(document.getElementById("dishPrice").value||0);
+  const description=document.getElementById("dishDescription").value.trim();
+  const ingredients=document.getElementById("dishIngredients").value.trim();
+  const file=document.getElementById("dishImage").files[0];
+
+  if(!name){
+    message("Введите название блюда");
+    return;
+  }
+
+  if(!category_id){
+    message("Выберите категорию");
+    return;
+  }
+
+  let image_url=null;
+
+  if(id){
+    const old=dishesData.find(x=>x.id===id);
+    image_url=old?.image_url||null;
+  }
+
+  if(file){
+
+    if(file.size>5*1024*1024){
+      message("Фото должно быть не больше 5 МБ");
+      return;
+    }
+
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+
+    const path=
+      "dishes/"+Date.now()+"_"+safeName;
+
+    const {error:uploadError}=await supabaseClient
+      .storage
+      .from("dish-images")
+      .upload(path,file,{
+        contentType:file.type,
+        upsert:false
+      });
+
+    if(uploadError){
+      message("Ошибка загрузки фото: "+uploadError.message);
+      return;
+    }
+
+    const {data:urlData}=
+      supabaseClient
+      .storage
+      .from("dish-images")
+      .getPublicUrl(path);
+
+    image_url=urlData.publicUrl;
+  }
+
+  if(id){
+
+    const updateData={
+      name,
+      category_id,
+      price,
+      description,
+      ingredients,
+      updated_at:new Date().toISOString()
+    };
+
+    if(image_url) updateData.image_url=image_url;
+
+    const {error}=await supabaseClient
+      .from("dishes")
+      .update(updateData)
+      .eq("id",id);
+
+    if(error){
+      message(error.message);
+      return;
+    }
+
+    message("Блюдо обновлено");
+
+  }else{
+
+    const maxOrder=dishesData.length
+      ? Math.max(...dishesData.map(d=>d.sort_order||0))+1
+      : 0;
+
+    const {error}=await supabaseClient
+      .from("dishes")
+      .insert({
+        category_id,
+        name,
+        description,
+        ingredients,
+        price,
+        image_url,
+        sort_order:maxOrder,
+        is_active:true
+      });
+
+    if(error){
+      message(error.message);
+      return;
+    }
+
+    message("Блюдо добавлено");
+  }
+
+  clearDishForm();
+  await loadDishes();
+};
+
+window.editDish=(id)=>{
+
+  const dish=dishesData.find(x=>x.id===id);
+
+  if(!dish) return;
+
+  document.getElementById("dishId").value=dish.id;
+  document.getElementById("dishName").value=dish.name||"";
+  document.getElementById("dishCategory").value=dish.category_id||"";
+  document.getElementById("dishPrice").value=dish.price||"";
+  document.getElementById("dishDescription").value=dish.description||"";
+  document.getElementById("dishIngredients").value=dish.ingredients||"";
+  document.getElementById("dishTitle").textContent="Редактировать блюдо";
+
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+
+document.getElementById("cancelEditBtn").onclick=clearDishForm;
+
+function clearDishForm(){
+
+  document.getElementById("dishId").value="";
+  document.getElementById("dishName").value="";
+  document.getElementById("dishPrice").value="";
+  document.getElementById("dishDescription").value="";
+  document.getElementById("dishIngredients").value="";
+  document.getElementById("dishImage").value="";
+  document.getElementById("dishTitle").textContent="Добавить блюдо";
+}
+
+window.toggleDish=async(id,value)=>{
+
+  const {error}=await supabaseClient
+    .from("dishes")
+    .update({
+      is_active:value,
+      updated_at:new Date().toISOString()
+    })
+    .eq("id",id);
+
+  if(error){
+    message(error.message);
+    return;
+  }
+
+  await loadDishes();
+};
+
+window.deleteDish=async(id)=>{
+
+  if(!confirm("Удалить блюдо?")) return;
+
+  const {error}=await supabaseClient
+    .from("dishes")
+    .delete()
+    .eq("id",id);
+
+  if(error){
+    message(error.message);
+    return;
+  }
+
+  message("Блюдо удалено");
+  await loadDishes();
+};
+
+window.moveDish=async(id,direction)=>{
+
+  const index=dishesData.findIndex(x=>x.id===id);
+  const newIndex=index+direction;
+
+  if(index<0 || newIndex<0 || newIndex>=dishesData.length)
+    return;
+
+  const current=dishesData[index];
+  const target=dishesData[newIndex];
+
+  const currentOrder=current.sort_order;
+  const targetOrder=target.sort_order;
+
+  const {error:e1}=await supabaseClient
+    .from("dishes")
+    .update({sort_order:targetOrder})
+    .eq("id",current.id);
+
+  if(e1){
+    message(e1.message);
+    return;
+  }
+
+  const {error:e2}=await supabaseClient
+    .from("dishes")
+    .update({sort_order:currentOrder})
+    .eq("id",target.id);
+
+  if(e2){
+    message(e2.message);
+    return;
+  }
+
+  await loadDishes();
+};
+
+function escapeHtml(value){
+
+  return String(value||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+checkSession();
+</script>
+
+</body>
+</html>
